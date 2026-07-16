@@ -1,11 +1,22 @@
 const express = require('express')
+const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
-const app = express()
-app.use(express.json());
 const pool = require('./config/db');
 const verifyToken = require('./middleware/verifyToken');
+const assistantRoutes = require('./routes/assistant');
+require('dotenv').config()
+
+const app = express()
+
+app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
+app.use('/', assistantRoutes);
 
 const PORT = process.env.PORT || 5000;
 

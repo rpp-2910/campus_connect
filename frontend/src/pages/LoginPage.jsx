@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import client from "../api/client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -14,55 +14,70 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const response = await client.post('/login', { email, password });
+      const response = await client.post("/login", { email, password });
       login(response.data.user, response.data.token);
-      navigate('/');
+      navigate("/");
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
-      <h2>Login</h2>
+    <div className="page page-narrow" style={{ paddingTop: 64 }}>
+      <div className="card" style={{ padding: 32, textAlign: "center" }}>
+        <h2 style={{ marginBottom: 4 }}>Welcome back</h2>
+        <p className="page-subtext" style={{ marginBottom: 24 }}>
+          Log in to ask, post, and vote.
+        </p>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p className="error-text">{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Email</label><br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Password</label><br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+          <div className="field">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="btn btn-primary btn-block"
+            disabled={loading}
+          >
+            {loading ? "Logging in…" : "Login"}
+          </button>
+        </form>
 
-      <p>Don't have an account? <Link to="/register">Register</Link></p>
+        <p style={{ marginTop: 18, fontSize: 14, color: "var(--ink-soft)" }}>
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            style={{ color: "var(--gold-dark)", fontWeight: 600 }}
+          >
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

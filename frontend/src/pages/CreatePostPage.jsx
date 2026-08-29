@@ -1,15 +1,16 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import client from '../api/client';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import client from "../api/client";
+import { CATEGORIES } from "../lib/categories";
 
 export default function CreatePostPage() {
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    category: 'General'
+    title: "",
+    content: "",
+    category: "General",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,64 +21,69 @@ export default function CreatePostPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await client.post('/posts', formData);
+      const response = await client.post("/posts", formData);
       navigate(`/posts/${response.data.id}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create post');
+      setError(err.response?.data?.error || "Failed to create post");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px' }}>
-      <h2>Create Post</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="page" style={{ maxWidth: 620 }}>
+      <div className="page-header">
+        <h2>Create a post</h2>
+        <p className="page-subtext">
+          Share notes, ask a question, or post an update for your campus.
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Title</label><br />
-          <input
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+      {error && <p className="error-text">{error}</p>}
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Category</label><br />
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px' }}
-          >
-            <option>Academics & Notes</option>
-            <option>Professors & Courses</option>
-            <option>Placements & Internships</option>
-            <option>Campus Life</option>
-            <option>General</option>
-          </select>
-        </div>
+      <div className="card" style={{ padding: 24, textAlign: "left" }}>
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label>Title</label>
+            <input
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              placeholder="What's this about?"
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Content</label><br />
-          <textarea
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            required
-            rows={6}
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+          <div className="field">
+            <label>Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Posting...' : 'Post'}
-        </button>
-      </form>
+          <div className="field">
+            <label>Content</label>
+            <textarea
+              name="content"
+              value={formData.content}
+              onChange={handleChange}
+              required
+              rows={7}
+              placeholder="Share the details…"
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? "Posting…" : "Post"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

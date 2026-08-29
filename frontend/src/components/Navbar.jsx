@@ -1,41 +1,142 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { initials } from "../lib/categories";
 
-export default function Navbar () {
+const navLinkStyle = ({ isActive }) => ({
+  color: isActive ? "#fff" : "rgba(247,245,239,0.72)",
+  textDecoration: "none",
+  fontSize: "14px",
+  fontWeight: 600,
+  padding: "6px 0",
+  borderBottom: isActive ? "2px solid var(--gold)" : "2px solid transparent",
+  transition: "color 0.15s",
+});
+
+export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout ();
-    navigate('/login');
+    logout();
+    navigate("/login");
   };
 
-  return(
-    <nav style = {{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '12px 24px',
-      backgroundColor: '#1a2b4a',
-      color: 'white'
-    }}>
+  return (
+    <nav
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        display: "flex",
+        justifyContent: "center",
+        background: "var(--ink)",
+        boxShadow: "var(--shadow-md)",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 900,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "12px 20px",
+          gap: 16,
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            textDecoration: "none",
+          }}
+        >
+          <span
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              background: "var(--gold)",
+              color: "var(--ink)",
+              fontFamily: "var(--font-display)",
+              fontWeight: 700,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            CC
+          </span>
+          <span
+            style={{
+              color: "#fff",
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              fontSize: 17,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Campus Connect
+          </span>
+        </Link>
 
-      <Link to="/" style = {{ color: 'white', textDecoration: 'none', fontSize: '18px', fontWeight: 'bold'}}>Campus Connect</Link>
-
-      <div style={{ display: 'flex', gap:'16px', alignItems:'center'}}>
-        {user ? (
-          <>
-            <span>Hi, {user.username}</span>
-            <Link to="/create" style={{ color: 'white' }}>New Post</Link>
-            <Link to="/assistant" style={{ color: 'white' }}>AI Assistant</Link>
-            <button onClick={handleLogout} style={{ cursor: 'pointer' }}>Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" style={{ color: 'white' }}>Login</Link>
-            <Link to="/register" style={{ color: 'white' }}>Register</Link>
-          </>
-        )}
+        <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+          {user ? (
+            <>
+              <NavLink to="/assistant" style={navLinkStyle}>
+                Ask AI
+              </NavLink>
+              <Link
+                to="/create"
+                className="btn btn-accent"
+                style={{ padding: "7px 14px", fontSize: 13.5 }}
+              >
+                + New Post
+              </Link>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 10 }}
+                title={user.username}
+              >
+                <span
+                  className="avatar"
+                  style={{ width: 28, height: 28, fontSize: 12 }}
+                >
+                  {initials(user.username)}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "rgba(247,245,239,0.72)",
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    padding: 0,
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <NavLink to="/login" style={navLinkStyle}>
+                Login
+              </NavLink>
+              <Link
+                to="/register"
+                className="btn btn-accent"
+                style={{ padding: "7px 16px", fontSize: 13.5 }}
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

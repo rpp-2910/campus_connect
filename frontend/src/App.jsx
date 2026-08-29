@@ -17,7 +17,7 @@ export default function App() {
   const { user } = useAuth();
   return (
     <>
-      {user && <Navbar />}
+      <Navbar />
       <Routes>
         <Route path="/"        element={<FeedPage />} />
         <Route path="/login" element={

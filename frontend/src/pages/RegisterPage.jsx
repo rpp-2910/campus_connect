@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import client from "../api/client";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    branch: '',
-    year: ''
+    username: "",
+    email: "",
+    password: "",
+    branch: "",
+    year: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
@@ -23,101 +23,114 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const registerResponse = await client.post('/users', formData);
-      
-      const loginResponse = await client.post('/login', {
+      await client.post("/users", formData);
+
+      const loginResponse = await client.post("/login", {
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
 
       login(loginResponse.data.user, loginResponse.data.token);
-      navigate('/');
+      navigate("/");
     } catch (err) {
-      setError(err.response?.data?.error || 'Something went wrong');
+      setError(err.response?.data?.error || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '60px auto', padding: '20px' }}>
-      <h2>Register</h2>
+    <div className="page page-narrow" style={{ paddingTop: 40 }}>
+      <div className="card" style={{ padding: 32, textAlign: "center" }}>
+        <h2 style={{ marginBottom: 4 }}>Join Campus Connect</h2>
+        <p className="page-subtext" style={{ marginBottom: 24 }}>
+          Create an account to post, vote, and ask the AI assistant.
+        </p>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+        {error && <p className="error-text">{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '12px' }}>
-          <label>Username</label><br />
-          <input
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="field">
+            <label>Username</label>
+            <input
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Email</label><br />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+          <div className="field">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Password</label><br />
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+          <div className="field">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Branch</label><br />
-          <input
-            name="branch"
-            value={formData.branch}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
+          <div className="field">
+            <label>Branch</label>
+            <input
+              name="branch"
+              value={formData.branch}
+              onChange={handleChange}
+              placeholder="e.g. Computer Science"
+            />
+          </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <label>Year</label><br />
-          <select
-            name="year"
-            value={formData.year}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '8px' }}
+          <div className="field">
+            <label>Year</label>
+            <select
+              name="year"
+              value={formData.year}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select year</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-block"
+            disabled={loading}
           >
-            <option value="">Select Year</option>
-            <option value="1">1st Year</option>
-            <option value="2">2nd Year</option>
-            <option value="3">3rd Year</option>
-            <option value="4">4th Year</option>
-          </select>
-        </div>
+            {loading ? "Registering…" : "Register"}
+          </button>
+        </form>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
-        </button>
-      </form>
-
-      <p>Already have an account? <Link to="/login">Login</Link></p>
+        <p style={{ marginTop: 18, fontSize: 14, color: "var(--ink-soft)" }}>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            style={{ color: "var(--gold-dark)", fontWeight: 600 }}
+          >
+            Login
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

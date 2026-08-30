@@ -48,16 +48,19 @@ async function retrieveRelevantPosts(queryEmbedding, topK = 5, inferredCategory 
       p.created_at,
       e.vote_weight,
       (1 - (e.embedding <=> $1::vector)) AS similarity,
-      (1 - (e.embedding <=> $1::vector))
-        * LEAST(e.vote_weight, 1.5)
-        * CASE WHEN p.category = $3 THEN 1.15 ELSE 1.0 END AS score
+      ((1 - (e.embedding <=> $1::vector)) * 0.80
+        +
+      (LEAST(e.vote_weight, 1.5) - 1) * 0.10
+        +
+      CASE WHEN p.category = $3 THEN 0.10 ELSE 0 END
+      )AS score
      FROM embeddings e
      JOIN posts p ON e.post_id = p.id
      JOIN users u ON p.user_id = u.id
      WHERE (1 - (e.embedding <=> $1::vector)) >= $4
      ORDER BY score DESC
      LIMIT $2`,
-    [JSON.stringify(queryEmbedding), topK, inferredCategory, minSimilarity]
+    [JSON.stringify(queryEmbedding), topK, inferredCategory, minSimilarity],
   );
   return result.rows;
 }

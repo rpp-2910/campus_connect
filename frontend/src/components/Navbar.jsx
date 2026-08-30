@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { initials } from "../lib/categories";
@@ -15,6 +16,15 @@ const navLinkStyle = ({ isActive }) => ({
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (!searchQuery.trim()) return;
+
+    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+  };
 
   const handleLogout = () => {
     logout();
@@ -83,6 +93,31 @@ export default function Navbar() {
             Campus Connect
           </span>
         </Link>
+
+        <form
+          onSubmit={handleSearch}
+          style={{
+            flex: 1,
+            maxWidth: 340,
+          }}
+        >
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search campus..."
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.15)",
+              background: "rgba(255,255,255,0.08)",
+              color: "#fff",
+              outline: "none",
+              fontSize: 13.5,
+            }}
+          />
+        </form>
 
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
           {user ? (

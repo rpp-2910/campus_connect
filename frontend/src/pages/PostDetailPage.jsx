@@ -4,6 +4,7 @@ import client from "../api/client";
 import VoteButtons from "../components/VoteButtons";
 import CommentBox from "../components/CommentBox";
 import { categoryColor, initials } from "../lib/categories";
+import FileAttachments from "../components/FileAttachments";
 
 export default function PostDetailPage() {
   const { id } = useParams();
@@ -104,6 +105,8 @@ export default function PostDetailPage() {
 
         <VoteButtons postId={post.id} initialCount={post.vote_count || 0} />
       </div>
+
+      <FileAttachments postId={post.id} />
 
       {/* Comments */}
       <h3 style={{ marginBottom: 12 }}>Comments ({comments.length})</h3>

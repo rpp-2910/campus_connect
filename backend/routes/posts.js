@@ -176,4 +176,118 @@ router.get("/:id/comments", async (req, res) => {
   }
 });
 
+// ── File Attachments ──────────────────────────────────────────
+
+const { PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const s3Client = require("../config/s3");
+const crypto = require("crypto");
+
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
+  "image/png",
+  "image/jpeg",
+];
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
+
+// 1. Request a presigned URL to upload a file for a post
+router.post("/:id/attachments/presign", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { filename, mimeType, sizeBytes } = req.body;
+
+    if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+      return res.status(400).json({ error: "File type not allowed" });
+    }
+    if (sizeBytes > MAX_FILE_SIZE_BYTES) {
+      return res.status(400).json({ error: "File too large (max 15MB)" });
+    }
+
+    const postCheck = await pool.query(`SELECT id FROM posts WHERE id = $1`, [id]);
+    if (postCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const uniqueKey = `posts/${id}/${crypto.randomUUID()}-${filename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: uniqueKey,
+      ContentType: mimeType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+    res.json({ uploadUrl, s3Key: uniqueKey });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 2. Confirm upload succeeded — save metadata row
+router.post("/:id/attachments", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { s3Key, originalFilename, mimeType, sizeBytes } = req.body;
+    const uploader_id = req.user.id;
+
+    const result = await pool.query(
+      `INSERT INTO post_attachments (post_id, uploader_id, s3_key, original_filename, mime_type, size_bytes)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [id, uploader_id, s3Key, originalFilename, mimeType, sizeBytes],
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Get all attachments for a post
+router.get("/:id/attachments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT id, original_filename, mime_type, size_bytes, uploaded_at
+       FROM post_attachments WHERE post_id = $1 ORDER BY uploaded_at DESC`,
+      [id],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Get a presigned download URL for one attachment
+router.get("/:id/attachments/:attachmentId/download", verifyToken, async (req, res) => {
+  try {
+    const { attachmentId } = req.params;
+
+    const result = await pool.query(
+      `SELECT s3_key, original_filename FROM post_attachments WHERE id = $1`,
+      [attachmentId],
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Attachment not found" });
+    }
+
+    const { s3_key, original_filename } = result.rows[0];
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3_key,
+      ResponseContentDisposition: `attachment; filename="${original_filename}"`,
+    });
+
+    const downloadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+    res.json({ downloadUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

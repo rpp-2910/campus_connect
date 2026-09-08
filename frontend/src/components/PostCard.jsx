@@ -1,80 +1,45 @@
 import VoteButtons from "./VoteButtons";
 import { categoryColor, initials } from "../lib/categories";
 
-export default function PostCard({ post, onClick }) {
+export default function PostCard({ post, onClick, featured = false }) {
   const color = categoryColor(post.category);
 
   return (
-    <div
+    <article
       onClick={onClick}
-      className="card tab-card"
-      style={{
-        "--tab-color": color,
-        padding: "16px 18px 16px 22px",
-        marginBottom: 12,
-        cursor: "pointer",
-        transition: "box-shadow 0.15s, transform 0.15s",
-        textAlign: "left",
-      }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.boxShadow = "var(--shadow-md)")
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.boxShadow = "var(--shadow-sm)")
-      }
+      className={`feed-post-card ${featured ? "feed-post-card-featured" : ""}`}
+      style={{ "--category-color": color }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
-        <span
-          className="badge"
-          style={{
-            "--tab-color": color,
-            "--tab-color-bg": "transparent",
-            border: `1px solid ${color}`,
-          }}
-        >
-          {post.category}
+      <div className="post-card-topline">
+        <span className="post-category">{post.category}</span>
+        <span className="post-card-menu" aria-hidden="true">
+          •••
         </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            className="avatar"
-            style={{ width: 22, height: 22, fontSize: 10.5 }}
-          >
-            {initials(post.username)}
-          </span>
-          <span style={{ fontSize: 12.5, color: "var(--ink-soft)" }}>
-            {post.username} · Year {post.year}
-          </span>
-        </div>
       </div>
 
-      <h3 style={{ marginBottom: 6 }}>{post.title}</h3>
-
-      <p
-        style={{
-          color: "var(--ink-soft)",
-          fontSize: 14,
-          lineHeight: 1.6,
-          marginBottom: 12,
-        }}
-      >
-        {post.content.length > 150
-          ? post.content.substring(0, 150) + "…"
+      <h3 className="post-card-title">{post.title}</h3>
+      <p className="post-card-preview">
+        {post.content.length > (featured ? 220 : 165)
+          ? post.content.substring(0, featured ? 220 : 165) + "…"
           : post.content}
       </p>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <VoteButtons postId={post.id} initialCount={post.vote_count} />
-        <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-          💬 {post.comment_count} comments
-        </span>
+      <div className="post-card-footer">
+        <div className="post-author">
+          <span className="post-author-avatar">{initials(post.username)}</span>
+          <span>
+            <strong>{post.username}</strong>
+            <small>Year {post.year}</small>
+          </span>
+        </div>
+
+        <div className="post-stats" onClick={(e) => e.stopPropagation()}>
+          <VoteButtons postId={post.id} initialCount={post.vote_count} />
+          <span className="post-comment-count">
+            💬 {post.comment_count || 0}
+          </span>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

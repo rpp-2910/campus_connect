@@ -1,23 +1,19 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
-import App from './App.jsx'
-import './index.css'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import App from './App.jsx';
+import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>
-)
-
-// StrictMode — dev tool, highlights potential problems
-// BrowserRouter — must wrap everything that uses routing
-// AuthProvider — must wrap everything that uses auth
-// App — your actual app, has access to both routing and auth
-
-
+);

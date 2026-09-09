@@ -1,17 +1,29 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import client from "../api/client";
-import { CATEGORIES } from "../lib/categories";
+import { CATEGORIES, categoryColor } from "../lib/categories";
+import { useToast } from "../context/ToastContext";
 
 export default function CreatePostPage() {
+  const [searchParams] = useSearchParams();
+  const initialTitle = searchParams.get("title") || "";
+  const initialCategory = searchParams.get("category") || "General";
+
   const [formData, setFormData] = useState({
-    title: "",
+    title: initialTitle,
     content: "",
-    category: "General",
+    category: initialCategory,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const toast = useToast();
+
+  useEffect(() => {
+    if (initialTitle && !formData.title) {
+      setFormData((prev) => ({ ...prev, title: initialTitle }));
+    }
+  }, [initialTitle]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,29 +31,41 @@ export default function CreatePostPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.title.trim() || !formData.content.trim()) {
+      setError("Title and content cannot be empty");
+      return;
+    }
+
     setLoading(true);
+    setError("");
+
     try {
       const response = await client.post("/posts", formData);
+      toast.success("Post created successfully!");
       navigate(`/posts/${response.data.id}`);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to create post");
+      console.error("Create post error:", err);
+      const msg = err.response?.data?.error || "Failed to create post";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="page" style={{ maxWidth: 620 }}>
+    <div className="page" style={{ maxWidth: 680 }}>
       <div className="page-header">
-        <h2>Create a post</h2>
+        <span className="eyebrow">CONTRIBUTE KNOWLEDGE</span>
+        <h1>Create a Discussion</h1>
         <p className="page-subtext">
-          Share notes, ask a question, or post an update for your campus.
+          Share your placement experience, professor reviews, study notes, or questions for your campus community.
         </p>
       </div>
 
       {error && <p className="error-text">{error}</p>}
 
-      <div className="card" style={{ padding: 24, textAlign: "left" }}>
+      <div className="card" style={{ padding: 28, textAlign: "left", marginBottom: 20 }}>
         <form onSubmit={handleSubmit}>
           <div className="field">
             <label>Title</label>
@@ -50,7 +74,8 @@ export default function CreatePostPage() {
               value={formData.title}
               onChange={handleChange}
               required
-              placeholder="What's this about?"
+              placeholder="e.g. How I cleared TCS NQT technical round in 3 weeks"
+              disabled={loading}
             />
           </div>
 
@@ -60,29 +85,68 @@ export default function CreatePostPage() {
               name="category"
               value={formData.category}
               onChange={handleChange}
+              disabled={loading}
+              style={{
+                borderLeft: `4px solid ${categoryColor(formData.category)}`,
+              }}
             >
               {CATEGORIES.map((cat) => (
-                <option key={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="field">
-            <label>Content</label>
+            <label>Detailed Content</label>
             <textarea
               name="content"
               value={formData.content}
               onChange={handleChange}
               required
-              rows={7}
-              placeholder="Share the details…"
+              rows={8}
+              placeholder="Share the full details, tips, questions, or resources. Formatting with clear paragraphs makes it easy for juniors to read…"
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? "Posting…" : "Post"}
-          </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+            <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
+              {formData.content.length} characters
+            </span>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => navigate(-1)}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? "Publishing…" : "Publish Post"}
+              </button>
+            </div>
+          </div>
         </form>
+      </div>
+
+      {/* Community Posting Guidelines */}
+      <div
+        className="card"
+        style={{
+          padding: "16px 20px",
+          background: "rgba(255, 255, 255, 0.7)",
+          border: "1px dashed var(--border)",
+          textAlign: "left",
+          fontSize: 13,
+          color: "var(--ink-soft)",
+          lineHeight: 1.6,
+        }}
+      >
+        <strong style={{ color: "var(--ink)" }}>💡 Senior Student Tip:</strong> Posts with specific company interview questions, professor attendance policies, and course feedback are automatically indexed by the Campus AI to help other students!
       </div>
     </div>
   );

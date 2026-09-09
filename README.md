@@ -362,6 +362,17 @@ them.**
     variables.
 -   `.env` files should never be committed to source control.
 
+### AWS S3 Storage & IAM Permissions
+
+For attachment uploads and deletions to function in production, the IAM user/role associated with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` must have the following IAM permissions on the configured S3 bucket:
+
+- `s3:PutObject` on `arn:aws:s3:::<S3_BUCKET_NAME>/*`
+- `s3:GetObject` on `arn:aws:s3:::<S3_BUCKET_NAME>/*`
+- `s3:DeleteObject` on `arn:aws:s3:::<S3_BUCKET_NAME>/*`
+
+> **Important**: If `s3:DeleteObject` is omitted from the IAM policy, deleting attachments or deleting posts with attachments will fail with error code `S3_DELETE_PERMISSION_DENIED` (HTTP 502) and database records will be preserved to prevent desynchronization between storage and the database.
+
+
 ## Author
 
 Built as a full-stack project exploring community platforms, semantic

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import client from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 function Chevron({ up }) {
   return (
@@ -16,38 +17,81 @@ function Chevron({ up }) {
   );
 }
 
-export default function VoteButtons({ postId, initialCount }) {
-  const [voteCount, setVoteCount] = useState(Number(initialCount));
-  const [userVote, setUserVote] = useState(null); // 1, -1, or null
+export default function VoteButtons({ postId, initialCount, initialUserVote }) {
+  const [voteCount, setVoteCount] = useState(Number(initialCount || 0));
+  const [userVote, setUserVote] = useState(initialUserVote !== undefined ? initialUserVote : null); // 1, -1, or null
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
+
+  // Sync state if props update
+  useEffect(() => {
+    setVoteCount(Number(initialCount || 0));
+  }, [initialCount]);
+
+  useEffect(() => {
+    if (initialUserVote !== undefined) {
+      setUserVote(initialUserVote);
+    }
+  }, [initialUserVote]);
+
+  // Hydrate vote state from server on mount if not supplied by parent
+  useEffect(() => {
+    if (!user || initialUserVote !== undefined || !postId) return;
+
+    let isMounted = true;
+    const fetchMyVote = async () => {
+      try {
+        const res = await client.get(`/posts/${postId}/my-vote`);
+        if (isMounted && res.data) {
+          setUserVote(res.data.vote_type);
+        }
+      } catch (err) {
+        console.error("Failed to load user vote:", err);
+      }
+    };
+
+    fetchMyVote();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [postId, user, initialUserVote]);
 
   const handleVote = async (type) => {
     if (!user) {
-      alert("Please login to vote");
+      toast.info("Please log in to vote");
       return;
     }
+
+    if (loading) return;
+    setLoading(true);
 
     try {
       if (userVote === type) {
         // clicking same vote again → remove vote
-        await client.delete(`/posts/${postId}/vote`);
-        setVoteCount((prev) => prev - type);
+        const res = await client.delete(`/posts/${postId}/vote`);
         setUserVote(null);
-      } else {
-        // new vote or changing vote
-        await client.post(`/posts/${postId}/vote`, { vote_type: type });
-
-        if (userVote !== null) {
-          // was -1, now +1 (or vice versa) → difference is 2
-          setVoteCount((prev) => prev + type * 2);
+        if (res.data && res.data.vote_count !== undefined) {
+          setVoteCount(res.data.vote_count);
         } else {
-          // no previous vote
-          setVoteCount((prev) => prev + type);
+          setVoteCount((prev) => prev - type);
         }
+      } else {
+        // new vote or toggling vote
+        const res = await client.post(`/posts/${postId}/vote`, { vote_type: type });
         setUserVote(type);
+        if (res.data && res.data.vote_count !== undefined) {
+          setVoteCount(res.data.vote_count);
+        } else {
+          setVoteCount((prev) => (userVote !== null ? prev + type * 2 : prev + type));
+        }
       }
     } catch (err) {
-      console.error("Vote failed", err);
+      console.error("Vote failed:", err);
+      toast.error(err.response?.data?.error || "Failed to update vote");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,7 +99,7 @@ export default function VoteButtons({ postId, initialCount }) {
     background: active ? `var(--${color}-bg)` : "transparent",
     border: "none",
     borderRadius: 6,
-    cursor: "pointer",
+    cursor: loading ? "wait" : "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -82,6 +126,7 @@ export default function VoteButtons({ postId, initialCount }) {
         onClick={() => handleVote(1)}
         style={btnStyle(userVote === 1, "green")}
         aria-label="Upvote"
+        disabled={loading}
       >
         <Chevron up />
       </button>
@@ -92,6 +137,7 @@ export default function VoteButtons({ postId, initialCount }) {
           minWidth: 22,
           textAlign: "center",
           fontSize: 13.5,
+          color: userVote === 1 ? "var(--green)" : userVote === -1 ? "var(--red)" : "inherit",
         }}
       >
         {voteCount}
@@ -101,6 +147,7 @@ export default function VoteButtons({ postId, initialCount }) {
         onClick={() => handleVote(-1)}
         style={btnStyle(userVote === -1, "red")}
         aria-label="Downvote"
+        disabled={loading}
       >
         <Chevron />
       </button>

@@ -148,7 +148,7 @@ async function createPost(req, res) {
 
     // Embed the post so it's searchable by semantic search and assistant
     try {
-      await embedPost(newPost.id, `${newPost.title}\n${newPost.content}`);
+      await embedPost(newPost.id, newPost.title, newPost.content);
     } catch (embedErr) {
       console.error(`Warning: Failed to generate embedding for post ${newPost.id}:`, embedErr);
       // Don't fail post creation completely if embedding API has a momentary glitch
@@ -206,7 +206,7 @@ async function updatePost(req, res) {
 
     // CRITICAL: Must regenerate embedding on save so search and RAG don't serve stale text
     try {
-      await embedPost(id, `${updatedTitle}\n${updatedContent}`);
+      await embedPost(id, updatedTitle, updatedContent);
       console.log(`✅ Embedding regenerated for updated post ${id}`);
     } catch (embedErr) {
       console.error(`Warning: Failed to refresh embedding for post ${id}:`, embedErr);

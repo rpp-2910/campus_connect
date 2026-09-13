@@ -4,20 +4,20 @@ const { embedPost } = require('./controllers/assistantController'); // adjust pa
 
 async function backfill() {
   try {
-    // Find posts that exist in `posts` but have no row in `embeddings`
+    // Find posts that exist in `posts` but have no row in `post_chunks`
     const result = await pool.query(`
       SELECT p.id, p.title, p.content
       FROM posts p
-      LEFT JOIN embeddings e ON p.id = e.post_id
-      WHERE e.post_id IS NULL
+      LEFT JOIN (SELECT DISTINCT post_id FROM post_chunks) pc ON p.id = pc.post_id
+      WHERE pc.post_id IS NULL
     `);
 
     const missingPosts = result.rows;
-    console.log(`Found ${missingPosts.length} posts missing embeddings.`);
+    console.log(`Found ${missingPosts.length} posts missing chunks/embeddings.`);
 
     for (const post of missingPosts) {
       console.log(`Embedding post ${post.id}: "${post.title}"`);
-      await embedPost(post.id, `${post.title}\n${post.content}`);
+      await embedPost(post.id, post.title, post.content);
     }
 
     console.log('Backfill complete.');

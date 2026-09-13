@@ -7,9 +7,8 @@ async function embedAllPosts() {
   console.log(`Embedding ${posts.rows.length} posts...`);
 
   for (const post of posts.rows) {
-    const text = `${post.title}\n${post.content}`;
-    await embedPost(post.id, text);
-    console.log(`✅ Embedded post ${post.id}: ${post.title}`);
+    await embedPost(post.id, post.title, post.content);
+    console.log(`✅ Embedded chunks for post ${post.id}: "${post.title}"`);
   }
 
   console.log('Done — all posts embedded!');
